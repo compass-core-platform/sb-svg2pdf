@@ -26,34 +26,41 @@ export class CertificateDownloadAsPdfService {
 
     const domtoimage = await this.domtoimageModule;
 
-    domtoimage.toPng(canvasElement, {
-      style: {
-        left: '0',
-        right: '0',
-        bottom: '0',
-        top: '0'
-      }
-    })
-    .then(async (blob) => {
-      const JsPDF = await this.jsPDFModule;
-      const pdf = new JsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: [
-          1060 / 1.33, 750 / 1.33
-        ]
-      });
-      pdf.addImage(blob, 'PNG', 0, 0);
-
-      fileName = fileName || CertificateDirectivesUtility.extractFileName(template);
-
-      if (handlePdfData) {
-        handlePdfData(fileName + '.pdf', pdf.output('blob'));
-      } else {
-        pdf.save(fileName + '.pdf');
-      }
-
-      canvasElement.remove();
+    return new Promise<boolean>((resolve, reject) => {
+      domtoimage.toPng(canvasElement, {
+        style: {
+          left: '0',
+          right: '0',
+          bottom: '0',
+          top: '0'
+        }
+      })
+      .then(async (blob) => {
+        const JsPDF = await this.jsPDFModule;
+        const pdf = new JsPDF({
+          orientation: 'landscape',
+          unit: 'pt',
+          format: [
+            1060 / 1.33, 750 / 1.33
+          ]
+        });
+        pdf.addImage(blob, 'PNG', 0, 0);
+  
+        fileName = fileName || CertificateDirectivesUtility.extractFileName(template);
+  
+        if (handlePdfData) {
+          handlePdfData(fileName + '.pdf', pdf.output('blob'));
+        } else {
+          pdf.save(fileName + '.pdf');
+        }
+  
+        canvasElement.remove();
+        resolve(true);
+      }).
+      catch((error) => {
+        canvasElement.remove();
+        reject(error);
+      })
     });
   }
 }
